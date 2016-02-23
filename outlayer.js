@@ -315,18 +315,18 @@ proto._layoutItems = function( items, isInstant ) {
     return;
   }
 
-  var queue = [];
+  var layoutQueue = [];
 
   items.forEach( function( item ) {
     // get x/y object from method
-    var position = this._getItemLayoutPosition( item );
+    var layout = this._getItemLayout( item );
     // enqueue
-    position.item = item;
-    position.isInstant = isInstant || item.isLayoutInstant;
-    queue.push( position );
+    layout.item = item;
+    layout.isInstant = isInstant || item.isLayoutInstant;
+    layoutQueue.push( layout );
   }, this );
 
-  this._processLayoutQueue( queue );
+  this._processLayoutQueue( layoutQueue );
 };
 
 /**
@@ -334,10 +334,12 @@ proto._layoutItems = function( items, isInstant ) {
  * @param {Outlayer.Item} item
  * @returns {Object} x and y position
  */
-proto._getItemLayoutPosition = function( /* item */ ) {
+proto._getItemLayout = function( /* item */ ) {
   return {
     x: 0,
-    y: 0
+    y: 0,
+    width: 'auto',
+    height: 'auto'
   };
 };
 
@@ -349,7 +351,7 @@ proto._getItemLayoutPosition = function( /* item */ ) {
  */
 proto._processLayoutQueue = function( queue ) {
   queue.forEach( function( obj ) {
-    this._positionItem( obj.item, obj.x, obj.y, obj.isInstant );
+    this._positionItem( obj.item, obj.x, obj.y, obj.width, obj.height, obj.isInstant );
   }, this );
 };
 
@@ -360,12 +362,14 @@ proto._processLayoutQueue = function( queue ) {
  * @param {Number} y - vertical position
  * @param {Boolean} isInstant - disables transitions
  */
-proto._positionItem = function( item, x, y, isInstant ) {
+proto._positionItem = function( item, x, y, width, height, isInstant ) {
   if ( isInstant ) {
     // if not transition, just set CSS
+    item.setSize( width, height );
     item.goTo( x, y );
   } else {
-    item.moveTo( x, y );
+    //item.setSize( width, height );
+    item.moveTo( x, y, width );
   }
 };
 

@@ -178,6 +178,9 @@ proto.layoutPosition = function() {
   style[ yProperty ] = this.getYValue( y );
   // reset other property
   style[ yResetProperty ] = '';
+  
+  style[ 'width' ] = isNaN(this.size.width) ? this.size.width : this.size.width + 'px';
+  style[ 'height' ] = isNaN(this.size.height) ? this.size.height : this.size.height + 'px';
 
   this.css( style );
   this.emitEvent( 'layout', [ this ] );
@@ -195,29 +198,34 @@ proto.getYValue = function( y ) {
     ( ( y / this.layout.size.height ) * 100 ) + '%' : y + 'px';
 };
 
-proto._transitionTo = function( x, y ) {
+proto._transitionTo = function( x, y, width ) {
   this.getPosition();
   // get current x & y from top/left
   var curX = this.position.x;
   var curY = this.position.y;
+  var curWidth = this.size.width;
 
   var compareX = parseInt( x, 10 );
   var compareY = parseInt( y, 10 );
+  var compareW = parseInt( width, 10 );
   var didNotMove = compareX === this.position.x && compareY === this.position.y;
+  var didNotScale = compareW === this.size.width;
 
   // save end position
   this.setPosition( x, y );
+  this.setSize(width);
 
   // if did not move and not transitioning, just go to layout
-  if ( didNotMove && !this.isTransitioning ) {
+  if ( didNotMove && didNotScale && !this.isTransitioning ) {
     this.layoutPosition();
     return;
   }
 
   var transX = x - curX;
   var transY = y - curY;
+  var transW = width / curWidth;
   var transitionStyle = {};
-  transitionStyle.transform = this.getTranslate( transX, transY );
+  transitionStyle.transform = this.getTranslate( transX, transY, transW );
 
   this.transition({
     to: transitionStyle,
@@ -228,13 +236,13 @@ proto._transitionTo = function( x, y ) {
   });
 };
 
-proto.getTranslate = function( x, y ) {
+proto.getTranslate = function( x, y, width ) {
   // flip cooridinates if origin on right or bottom
   var isOriginLeft = this.layout._getOption('originLeft');
   var isOriginTop = this.layout._getOption('originTop');
   x = isOriginLeft ? x : -x;
   y = isOriginTop ? y : -y;
-  return 'translate3d(' + x + 'px, ' + y + 'px, 0)';
+  return 'translate3d(' + x + 'px, ' + y + 'px, 0)' + ' scaleX(' + width + ')';
 };
 
 // non transition + transform support
@@ -242,6 +250,15 @@ proto.goTo = function( x, y ) {
   this.setPosition( x, y );
   this.layoutPosition();
 };
+
+proto.setSize = function( width, height ) {
+  if(width) {
+    this.size.width = width;
+  }
+  if(height) {
+    this.size.height = height;
+  }
+}
 
 proto.moveTo = proto._transitionTo;
 
